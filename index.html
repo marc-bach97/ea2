@@ -1,0 +1,118 @@
+<!DOCTYPE html5>
+<html>
+    <title>2D geometry</title>
+    <style>
+        #canvas{
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+    </style>
+<body onload="initDraw(4)">
+    <div style="text-align: center;">
+        <h3>Ändern Sie die Anzahl der Stacheln, um einen Stern zu zeichnen</h3>
+        <label for ="number_of_spikes">Anzahl Spikes</label> 
+        <input type="number" name="number_of_spikes" id="number_of_spikes" min="4" max="100" value="4" onchange="drawAgain()">
+        <p style="text-align:center ;">Wenn Sie die Anzahl der Spitzen ändern, generiert der Javascript-Code ein neues Array für die Vertices und ändert den Vertices-Puffer</p>
+        <p style="text-align:center ;">Ich habe LINE_LOOP verwendet, um einen Stern zu zeichnen</p>
+    </div>
+    
+    
+<canvas id="canvas" width="500" height="500"></canvas>
+<script>
+var prog
+var canvas = document.getElementById('canvas');
+var gl = canvas.getContext('experimental-webgl');
+gl.clearColor(1, 1, 1, 1);
+
+// Diese Funktion ändert die Anzahl der Spikes und ruft die updateStar-Funktion auf
+function drawAgain() {
+  var spikes = document.getElementById("number_of_spikes").value;
+  updateStar(spikes);
+  
+}
+
+// Diese Funktion generiert ein Array von Scheitelpunkten, um einen Stern zu zeichnen, 
+///sie erhält die Anzahl der Spitzen und generiert die erforderlichen Scheitelpunkte
+function getVertices(numberOfSpikes){
+    var rotation = Math.PI / 2 * 3;
+    var x = 0;
+    var y = 0;
+    var step = Math.PI / numberOfSpikes;
+    var vertices=[];
+
+    for (i = 0; i < numberOfSpikes; i++) {
+        x = 0 + Math.cos(rotation) * 0.75;
+        y = 0 + Math.sin(rotation) * 0.75;
+        vertices.push(x);
+        vertices.push(y);
+        rotation += step
+
+        x = 0 + Math.cos(rotation) * 0.3;
+        y = 0 + Math.sin(rotation) * 0.3;
+        rotation += step
+        vertices.push(x);
+        vertices.push(y);
+    }
+    return vertices;
+}
+
+// Diese Funktion initialisiert das Webgl-Objekt und zeichnet einen Stern mit 4 Zacken
+function initDraw(spikes){
+// Compile a vertex shader
+var vsSource = 'attribute vec2 pos;'+
+'void main(){gl_Position = vec4(pos, 0, 1);; '+
+' gl_PointSize = 10.0; }';
+ var vs = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vs, vsSource);
+gl.compileShader(vs);
+
+// Compile a fragment shader
+fsSouce = 'void main() { gl_FragColor = vec4(0.2,0.5,1,1); }';
+var fs = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fs, fsSouce);
+gl.compileShader(fs);
+
+// Link together into a program
+prog = gl.createProgram();
+gl.attachShader(prog, vs);
+gl.attachShader(prog, fs);
+gl.linkProgram(prog);
+gl.useProgram(prog);
+
+// Load vertex data into a buffer
+var vertices = new Float32Array(getVertices(spikes));
+var vbo = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+// Bind vertex buffer to attribute variable
+var posAttrib = gl.getAttribLocation(prog, 'pos');
+gl.vertexAttribPointer(posAttrib, 2, gl.FLOAT, false, 0, 0);
+gl.enableVertexAttribArray(posAttrib);
+
+
+// Clear framebuffer and render primitives
+gl.clear(gl.COLOR_BUFFER_BIT);
+gl.lineWidth(2.0);
+gl.drawArrays(gl.LINE_LOOP, 0, spikes*2);
+
+}
+
+// Diese Funktion aktualisiert die Leinwand und zeichnet einen neuen Stern mit den erforderlichen Stacheln
+function updateStar(spikes){
+var vertices = new Float32Array(getVertices(spikes));
+var vbo = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+var posAttrib = gl.getAttribLocation(prog, 'pos');
+gl.vertexAttribPointer(posAttrib, 2, gl.FLOAT, false, 0, 0);
+gl.enableVertexAttribArray(posAttrib);
+gl.drawArrays(gl.LINE_LOOP, 0, spikes*2);
+
+}
+
+</script>
+</body>
+</html>
